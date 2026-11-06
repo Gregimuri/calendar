@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#A3B565" />
+  <meta name="description" content="Календарь с планами на день" />
+  <title>Календарь</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <button type="button" class="nav-btn" id="prevMonth" aria-label="Предыдущий месяц">‹</button>
+      <button type="button" class="month-title" id="monthTitle" aria-label="Развернуть календарь">
+        <span id="monthLabel"></span>
+        <span class="expand-hint" id="expandHint" hidden>Развернуть</span>
+      </button>
+      <button type="button" class="nav-btn" id="nextMonth" aria-label="Следующий месяц">›</button>
+    </header>
+
+    <section class="calendar-section" aria-label="Календарь">
+      <div class="weekday-row" aria-hidden="true">
+        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </section>
+
+    <section class="tasks-section" id="tasksSection" hidden>
+      <div class="tasks-header">
+        <h2 class="tasks-date" id="tasksDateLabel"></h2>
+        <button type="button" class="add-btn" id="addTaskBtn" aria-label="Добавить задачу">+</button>
+      </div>
+
+      <form class="add-form" id="addForm" hidden>
+        <input
+          type="text"
+          id="addInput"
+          class="add-input"
+          placeholder="Новая задача…"
+          maxlength="500"
+          autocomplete="off"
+          enterkeyhint="done"
+        />
+        <button type="submit" class="add-submit">Готово</button>
+      </form>
+
+      <ul class="task-list" id="taskList" aria-live="polite"></ul>
+      <p class="empty-hint" id="emptyHint">Пока нет задач. Нажмите +, чтобы добавить.</p>
+    </section>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/tasks.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
