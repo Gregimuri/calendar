@@ -1,6 +1,7 @@
 const TasksView = (() => {
   let currentDateKey = null;
   let onChange = () => {};
+  let pendingDeleteId = null;
 
   const listEl = () => document.getElementById("taskList");
   const emptyEl = () => document.getElementById("emptyHint");
@@ -8,10 +9,20 @@ const TasksView = (() => {
   const inputEl = () => document.getElementById("addInput");
   const dateLabelEl = () => document.getElementById("tasksDateLabel");
   const sectionEl = () => document.getElementById("tasksSection");
+  const overlayEl = () => document.getElementById("confirmOverlay");
+  const confirmTextEl = () => document.getElementById("confirmText");
 
   const CHECK_SVG = `
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <polyline points="5 13 10 18 19 7"></polyline>
+    </svg>
+  `;
+
+  const TRASH_SVG = `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5 7h14"></path>
+      <path d="M10 7V5h4v2"></path>
+      <path d="M8 7l1 12h6l1-12"></path>
     </svg>
   `;
 
@@ -21,6 +32,7 @@ const TasksView = (() => {
     dateLabelEl().textContent = label;
     formEl().hidden = true;
     inputEl().value = "";
+    closeConfirm();
     render();
   }
 
@@ -28,6 +40,7 @@ const TasksView = (() => {
     currentDateKey = null;
     sectionEl().hidden = true;
     formEl().hidden = true;
+    closeConfirm();
   }
 
   function render() {
@@ -95,6 +108,15 @@ const TasksView = (() => {
       }
     });
 
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "task-delete";
+    del.setAttribute("aria-label", "Удалить задачу");
+    del.innerHTML = TRASH_SVG;
+    del.addEventListener("click", () => {
+      openConfirm(task);
+    });
+
     const handle = document.createElement("button");
     handle.type = "button";
     handle.className = "task-handle";
@@ -104,8 +126,33 @@ const TasksView = (() => {
 
     li.appendChild(check);
     li.appendChild(text);
+    li.appendChild(del);
     li.appendChild(handle);
     return li;
+  }
+
+  function openConfirm(task) {
+    pendingDeleteId = task.id;
+    const preview = task.text.length > 80 ? `${task.text.slice(0, 80)}…` : task.text;
+    confirmTextEl().textContent = preview || "Без названия";
+    overlayEl().hidden = false;
+    document.getElementById("confirmOk").focus();
+  }
+
+  function closeConfirm() {
+    pendingDeleteId = null;
+    overlayEl().hidden = true;
+  }
+
+  function confirmDelete() {
+    if (!currentDateKey || !pendingDeleteId) {
+      closeConfirm();
+      return;
+    }
+    Storage.deleteTask(currentDateKey, pendingDeleteId);
+    closeConfirm();
+    notifyChange();
+    render();
   }
 
   function notifyChange() {
@@ -234,6 +281,16 @@ const TasksView = (() => {
     onChange = handlers.onChange || (() => {});
     document.getElementById("addTaskBtn").addEventListener("click", openAddForm);
     formEl().addEventListener("submit", submitAdd);
+    document.getElementById("confirmCancel").addEventListener("click", closeConfirm);
+    document.getElementById("confirmOk").addEventListener("click", confirmDelete);
+    overlayEl().addEventListener("click", (event) => {
+      if (event.target === overlayEl()) closeConfirm();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !overlayEl().hidden) {
+        closeConfirm();
+      }
+    });
   }
 
   return {

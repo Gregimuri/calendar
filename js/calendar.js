@@ -50,17 +50,42 @@ const CalendarView = (() => {
     return copy;
   }
 
+  // Fixed-date Russian public holidays (month 0-based)
+  const HOLIDAYS = [
+    [0, 1], [0, 2], [0, 3], [0, 4], [0, 5], [0, 6], [0, 7], [0, 8], // New Year holidays
+    [1, 23], // Defender of the Fatherland Day
+    [2, 8],  // International Women's Day
+    [4, 1],  // Spring and Labour Day
+    [4, 9],  // Victory Day
+    [5, 12], // Russia Day
+    [10, 4], // Unity Day
+  ];
+
+  function isHoliday(date) {
+    const m = date.getMonth();
+    const d = date.getDate();
+    return HOLIDAYS.some(([hm, hd]) => hm === m && hd === d);
+  }
+
+  function isWeekend(date) {
+    const day = date.getDay();
+    return day === 0 || day === 6;
+  }
+
   function dotClassFor(dateKey, status) {
     if (!status) return "";
     const today = todayKey();
     const cmp = compareKeys(dateKey, today);
 
+    // All tasks done → green (any date)
+    if (status.allDone) return "all-done";
+
+    // Incomplete tasks
     if (status.hasOpen) {
-      if (cmp > 0) return "future";
-      if (cmp === 0) return "today-open";
-      return "past-open";
+      if (cmp > 0) return "future-open"; // future → gray
+      if (cmp === 0) return "today-open"; // today → yellow
+      return "past-open"; // past → red
     }
-    if (status.allDone && cmp < 0) return "past-done";
     return "";
   }
 
@@ -121,6 +146,7 @@ const CalendarView = (() => {
       if (!cell.inMonth) btn.classList.add("other-month");
       if (cell.key === today) btn.classList.add("today");
       if (cell.key === selectedKey) btn.classList.add("selected");
+      if (isWeekend(cell.date) || isHoliday(cell.date)) btn.classList.add("day-off");
 
       if (collapsed && weekKeys && !weekKeys.has(cell.key)) {
         btn.classList.add("week-hidden");

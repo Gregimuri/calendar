@@ -8,10 +8,11 @@
   --text-muted: #7a7564;
   --card: #fffdf5;
   --card-border: #e6dfc4;
-  --dot-future: #a3b565;
+  --dot-all-done: #a3b565;
+  --dot-future-open: #9a9a9a;
   --dot-today: #fcdd9d;
   --dot-past-open: #f1642e;
-  --dot-past-done: #9a9a9a;
+  --day-off: #d45a3a;
   --shadow: 0 8px 24px rgba(61, 58, 46, 0.08);
   --radius: 16px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -131,6 +132,10 @@ input {
   color: var(--text-muted);
 }
 
+.weekday-row .weekday-off {
+  color: var(--day-off);
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -176,13 +181,30 @@ input {
   font-weight: 500;
 }
 
+.day-cell.day-off .day-num {
+  color: var(--day-off);
+}
+
+.day-cell.other-month.day-off .day-num {
+  color: color-mix(in srgb, var(--day-off) 55%, #b5ae97);
+}
+
 .day-cell.today .day-num {
   background: var(--accent-soft);
   color: var(--accent-deep);
 }
 
+.day-cell.today.day-off .day-num {
+  color: var(--day-off);
+}
+
 .day-cell.selected .day-num {
   background: var(--accent);
+  color: #fffdf5;
+}
+
+.day-cell.selected.day-off .day-num {
+  background: var(--day-off);
   color: #fffdf5;
 }
 
@@ -197,8 +219,12 @@ input {
   background: transparent;
 }
 
-.day-dot.future {
-  background: var(--dot-future);
+.day-dot.all-done {
+  background: var(--dot-all-done);
+}
+
+.day-dot.future-open {
+  background: var(--dot-future-open);
 }
 
 .day-dot.today-open {
@@ -208,10 +234,6 @@ input {
 
 .day-dot.past-open {
   background: var(--dot-past-open);
-}
-
-.day-dot.past-done {
-  background: var(--dot-past-done);
 }
 
 .calendar-section.collapsed .day-cell.week-hidden {
@@ -321,7 +343,7 @@ input {
 
 .task-item {
   display: grid;
-  grid-template-columns: 40px 1fr 36px;
+  grid-template-columns: 40px 1fr 36px 36px;
   align-items: start;
   gap: 4px;
   background: var(--card);
@@ -406,6 +428,36 @@ input {
   color: var(--text);
 }
 
+.task-delete {
+  width: 36px;
+  height: 36px;
+  margin-top: 2px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.task-delete svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.task-delete:active {
+  color: var(--day-off);
+  background: rgba(212, 90, 58, 0.12);
+}
+
 .task-handle {
   width: 36px;
   min-height: 36px;
@@ -444,6 +496,70 @@ input {
 
 .empty-hint[hidden] {
   display: none;
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(61, 58, 46, 0.35);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  backdrop-filter: blur(2px);
+}
+
+.confirm-overlay[hidden] {
+  display: none;
+}
+
+.confirm-dialog {
+  width: min(100%, 340px);
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: calc(var(--radius) + 4px);
+  box-shadow: var(--shadow);
+  padding: 20px 18px 16px;
+  animation: rise 0.22s ease;
+}
+
+.confirm-title {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.confirm-text {
+  margin: 0 0 18px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.confirm-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.confirm-cancel,
+.confirm-ok {
+  border: none;
+  border-radius: 14px;
+  padding: 12px 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirm-cancel {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+.confirm-ok {
+  background: var(--day-off);
+  color: #fffdf5;
 }
 
 @media (min-width: 480px) {

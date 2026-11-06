@@ -24,7 +24,8 @@
 
     <section class="calendar-section" aria-label="Календарь">
       <div class="weekday-row" aria-hidden="true">
-        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+        <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span>
+        <span class="weekday-off">Сб</span><span class="weekday-off">Вс</span>
       </div>
       <div class="calendar-grid" id="calendarGrid"></div>
     </section>
@@ -51,6 +52,17 @@
       <ul class="task-list" id="taskList" aria-live="polite"></ul>
       <p class="empty-hint" id="emptyHint">Пока нет задач. Нажмите +, чтобы добавить.</p>
     </section>
+  </div>
+
+  <div class="confirm-overlay" id="confirmOverlay" hidden>
+    <div class="confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <h3 class="confirm-title" id="confirmTitle">Удалить задачу?</h3>
+      <p class="confirm-text" id="confirmText"></p>
+      <div class="confirm-actions">
+        <button type="button" class="confirm-cancel" id="confirmCancel">Отмена</button>
+        <button type="button" class="confirm-ok" id="confirmOk">Удалить</button>
+      </div>
+    </div>
   </div>
 
   <script src="js/storage.js"></script>

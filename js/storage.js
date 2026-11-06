@@ -64,6 +64,12 @@ const Storage = (() => {
     return tasks[index];
   }
 
+  function deleteTask(dateKey, taskId) {
+    const tasks = getTasks(dateKey).filter((t) => t.id !== taskId);
+    setTasks(dateKey, tasks);
+    return tasks;
+  }
+
   function reorderTasks(dateKey, orderedIds) {
     const tasks = getTasks(dateKey);
     const map = new Map(tasks.map((t) => [t.id, t]));
@@ -91,6 +97,7 @@ const Storage = (() => {
     getTasks,
     addTask,
     updateTask,
+    deleteTask,
     reorderTasks,
     getStatusMap,
   };
