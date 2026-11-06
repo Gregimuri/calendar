@@ -33,7 +33,17 @@
     <section class="tasks-section" id="tasksSection" hidden>
       <div class="tasks-header">
         <h2 class="tasks-date" id="tasksDateLabel"></h2>
-        <button type="button" class="add-btn" id="addTaskBtn" aria-label="Добавить задачу">+</button>
+        <div class="header-actions">
+          <button type="button" class="gift-btn" id="addBirthdayBtn" aria-label="Добавить день рождения">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="4" y="11" width="16" height="10" rx="1.5"></rect>
+              <path d="M12 7v14"></path>
+              <path d="M4 15h16"></path>
+              <path d="M12 7c-2.2 0-3.5-1.6-3.5-3S10.2 2 12 4.2 15.5 2 15.5 4 14.2 7 12 7z"></path>
+            </svg>
+          </button>
+          <button type="button" class="add-btn" id="addTaskBtn" aria-label="Добавить задачу">+</button>
+        </div>
       </div>
 
       <form class="add-form" id="addForm" hidden>
@@ -50,7 +60,7 @@
       </form>
 
       <ul class="task-list" id="taskList" aria-live="polite"></ul>
-      <p class="empty-hint" id="emptyHint">Пока нет задач. Нажмите +, чтобы добавить.</p>
+      <p class="empty-hint" id="emptyHint">Пока нет записей. Нажмите + или 🎁, чтобы добавить.</p>
     </section>
   </div>
 

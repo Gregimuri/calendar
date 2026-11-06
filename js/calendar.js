@@ -121,6 +121,7 @@ const CalendarView = (() => {
 
   function render() {
     const statusMap = Storage.getStatusMap();
+    const birthdayDays = Storage.getBirthdayMonthDays();
     const cells = buildCells();
     const weekKeys = collapsed ? selectedWeekKeys() : null;
     const today = todayKey();
@@ -157,11 +158,25 @@ const CalendarView = (() => {
       num.textContent = String(cell.date.getDate());
       btn.appendChild(num);
 
+      const markers = document.createElement("span");
+      markers.className = "day-markers";
+
+      const md = `${String(cell.date.getMonth() + 1).padStart(2, "0")}-${String(cell.date.getDate()).padStart(2, "0")}`;
+      if (birthdayDays.has(md)) {
+        const gift = document.createElement("span");
+        gift.className = "day-gift";
+        gift.setAttribute("aria-hidden", "true");
+        gift.textContent = "🎁";
+        markers.appendChild(gift);
+      }
+
       const dot = document.createElement("span");
       dot.className = "day-dot";
       const cls = dotClassFor(cell.key, statusMap[cell.key]);
       if (cls) dot.classList.add(cls);
-      btn.appendChild(dot);
+      markers.appendChild(dot);
+
+      btn.appendChild(markers);
 
       btn.addEventListener("click", () => {
         selectDay(cell.key);

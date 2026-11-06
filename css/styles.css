@@ -212,11 +212,26 @@ input {
   transform: scale(0.96);
 }
 
+.day-markers {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 10px;
+}
+
+.day-gift {
+  font-size: 0.55rem;
+  line-height: 1;
+  display: block;
+}
+
 .day-dot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
   background: transparent;
+  flex-shrink: 0;
 }
 
 .day-dot.all-done {
@@ -274,6 +289,42 @@ input {
   font-size: 1.15rem;
   font-weight: 600;
   text-transform: capitalize;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.gift-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 4px 12px rgba(163, 181, 101, 0.2);
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+
+.gift-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.gift-btn:active {
+  transform: scale(0.94);
+  background: rgba(163, 181, 101, 0.35);
 }
 
 .add-btn {
@@ -365,6 +416,30 @@ input {
 
 .task-item.drag-over {
   border-color: var(--accent);
+}
+
+.birthday-item {
+  background: color-mix(in srgb, var(--accent-soft) 55%, var(--card));
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--card-border));
+}
+
+.birthday-icon {
+  width: 36px;
+  height: 36px;
+  margin-top: 2px;
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.birthday-text {
+  font-weight: 600;
+}
+
+.task-handle-spacer {
+  width: 36px;
+  min-height: 36px;
 }
 
 .task-check {

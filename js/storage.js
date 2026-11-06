@@ -1,5 +1,6 @@
 const Storage = (() => {
   const KEY = "calendar-tasks";
+  const BIRTHDAY_KEY = "calendar-birthdays";
 
   function loadAll() {
     try {
@@ -14,6 +15,30 @@ const Storage = (() => {
 
   function saveAll(data) {
     localStorage.setItem(KEY, JSON.stringify(data));
+  }
+
+  function loadBirthdays() {
+    try {
+      const raw = localStorage.getItem(BIRTHDAY_KEY);
+      if (!raw) return [];
+      const data = JSON.parse(raw);
+      return Array.isArray(data) ? data : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveBirthdays(list) {
+    localStorage.setItem(BIRTHDAY_KEY, JSON.stringify(list));
+  }
+
+  function monthDayKey(month, day) {
+    return `${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+  }
+
+  function monthDayFromDateKey(dateKey) {
+    const parts = dateKey.split("-");
+    return `${parts[1]}-${parts[2]}`;
   }
 
   function getTasks(dateKey) {
@@ -93,6 +118,50 @@ const Storage = (() => {
     return map;
   }
 
+  function getBirthdaysForDate(dateKey) {
+    const md = monthDayFromDateKey(dateKey);
+    return loadBirthdays().filter((b) => monthDayKey(b.month, b.day) === md);
+  }
+
+  function hasBirthdayOnDate(dateKey) {
+    return getBirthdaysForDate(dateKey).length > 0;
+  }
+
+  function getBirthdayMonthDays() {
+    const set = new Set();
+    loadBirthdays().forEach((b) => set.add(monthDayKey(b.month, b.day)));
+    return set;
+  }
+
+  function addBirthday(dateKey, name) {
+    const [, month, day] = dateKey.split("-").map(Number);
+    const list = loadBirthdays();
+    const entry = {
+      id: createId(),
+      name: name.trim(),
+      month: month - 1,
+      day,
+    };
+    list.push(entry);
+    saveBirthdays(list);
+    return entry;
+  }
+
+  function updateBirthday(id, patch) {
+    const list = loadBirthdays();
+    const index = list.findIndex((b) => b.id === id);
+    if (index === -1) return null;
+    list[index] = { ...list[index], ...patch };
+    saveBirthdays(list);
+    return list[index];
+  }
+
+  function deleteBirthday(id) {
+    const list = loadBirthdays().filter((b) => b.id !== id);
+    saveBirthdays(list);
+    return list;
+  }
+
   return {
     getTasks,
     addTask,
@@ -100,5 +169,11 @@ const Storage = (() => {
     deleteTask,
     reorderTasks,
     getStatusMap,
+    getBirthdaysForDate,
+    hasBirthdayOnDate,
+    getBirthdayMonthDays,
+    addBirthday,
+    updateBirthday,
+    deleteBirthday,
   };
 })();

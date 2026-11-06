@@ -1,7 +1,8 @@
 const TasksView = (() => {
   let currentDateKey = null;
   let onChange = () => {};
-  let pendingDeleteId = null;
+  let pendingDelete = null; // { type: 'task'|'birthday', id, label }
+  let addMode = "task"; // 'task' | 'birthday'
 
   const listEl = () => document.getElementById("taskList");
   const emptyEl = () => document.getElementById("emptyHint");
@@ -11,6 +12,7 @@ const TasksView = (() => {
   const sectionEl = () => document.getElementById("tasksSection");
   const overlayEl = () => document.getElementById("confirmOverlay");
   const confirmTextEl = () => document.getElementById("confirmText");
+  const confirmTitleEl = () => document.getElementById("confirmTitle");
 
   const CHECK_SVG = `
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -32,6 +34,7 @@ const TasksView = (() => {
     dateLabelEl().textContent = label;
     formEl().hidden = true;
     inputEl().value = "";
+    addMode = "task";
     closeConfirm();
     render();
   }
@@ -45,14 +48,91 @@ const TasksView = (() => {
 
   function render() {
     if (!currentDateKey) return;
+    const birthdays = Storage.getBirthdaysForDate(currentDateKey);
     const tasks = Storage.getTasks(currentDateKey);
     const list = listEl();
     list.innerHTML = "";
-    emptyEl().hidden = tasks.length > 0;
+    emptyEl().hidden = birthdays.length > 0 || tasks.length > 0;
 
+    birthdays.forEach((b) => {
+      list.appendChild(createBirthdayItem(b));
+    });
     tasks.forEach((task) => {
       list.appendChild(createTaskItem(task));
     });
+  }
+
+  function createBirthdayItem(entry) {
+    const li = document.createElement("li");
+    li.className = "task-item birthday-item";
+    li.dataset.id = entry.id;
+
+    const icon = document.createElement("span");
+    icon.className = "birthday-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.textContent = "🎁";
+
+    const text = document.createElement("p");
+    text.className = "task-text birthday-text";
+    text.textContent = `День рождения: ${entry.name}`;
+    text.contentEditable = "true";
+    text.setAttribute("role", "textbox");
+    text.setAttribute("aria-label", "Имя именинника");
+    text.spellcheck = true;
+
+    let draft = entry.name;
+
+    text.addEventListener("focus", () => {
+      draft = entry.name;
+      text.textContent = entry.name;
+    });
+
+    text.addEventListener("blur", () => {
+      const next = (text.textContent || "").trim();
+      if (!next) {
+        text.textContent = `День рождения: ${draft || entry.name}`;
+        return;
+      }
+      if (next !== entry.name) {
+        Storage.updateBirthday(entry.id, { name: next });
+        notifyChange();
+      }
+      text.textContent = `День рождения: ${next}`;
+    });
+
+    text.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        text.blur();
+      }
+      if (event.key === "Escape") {
+        text.textContent = `День рождения: ${entry.name}`;
+        text.blur();
+      }
+    });
+
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "task-delete";
+    del.setAttribute("aria-label", "Удалить день рождения");
+    del.innerHTML = TRASH_SVG;
+    del.addEventListener("click", () => {
+      openConfirm({
+        type: "birthday",
+        id: entry.id,
+        label: entry.name,
+      });
+    });
+
+    const spacer = document.createElement("span");
+    spacer.className = "task-handle-spacer";
+    spacer.setAttribute("aria-hidden", "true");
+
+    li.appendChild(icon);
+    li.appendChild(text);
+    li.appendChild(del);
+    li.appendChild(spacer);
+    return li;
   }
 
   function createTaskItem(task) {
@@ -114,7 +194,11 @@ const TasksView = (() => {
     del.setAttribute("aria-label", "Удалить задачу");
     del.innerHTML = TRASH_SVG;
     del.addEventListener("click", () => {
-      openConfirm(task);
+      openConfirm({
+        type: "task",
+        id: task.id,
+        label: task.text,
+      });
     });
 
     const handle = document.createElement("button");
@@ -131,25 +215,32 @@ const TasksView = (() => {
     return li;
   }
 
-  function openConfirm(task) {
-    pendingDeleteId = task.id;
-    const preview = task.text.length > 80 ? `${task.text.slice(0, 80)}…` : task.text;
+  function openConfirm(item) {
+    pendingDelete = item;
+    confirmTitleEl().textContent = item.type === "birthday"
+      ? "Удалить день рождения?"
+      : "Удалить задачу?";
+    const preview = item.label.length > 80 ? `${item.label.slice(0, 80)}…` : item.label;
     confirmTextEl().textContent = preview || "Без названия";
     overlayEl().hidden = false;
     document.getElementById("confirmOk").focus();
   }
 
   function closeConfirm() {
-    pendingDeleteId = null;
+    pendingDelete = null;
     overlayEl().hidden = true;
   }
 
   function confirmDelete() {
-    if (!currentDateKey || !pendingDeleteId) {
+    if (!pendingDelete) {
       closeConfirm();
       return;
     }
-    Storage.deleteTask(currentDateKey, pendingDeleteId);
+    if (pendingDelete.type === "birthday") {
+      Storage.deleteBirthday(pendingDelete.id);
+    } else if (currentDateKey) {
+      Storage.deleteTask(currentDateKey, pendingDelete.id);
+    }
     closeConfirm();
     notifyChange();
     render();
@@ -159,10 +250,12 @@ const TasksView = (() => {
     onChange();
   }
 
-  function openAddForm() {
+  function openAddForm(mode) {
     if (!currentDateKey) return;
+    addMode = mode;
     formEl().hidden = false;
     inputEl().value = "";
+    inputEl().placeholder = mode === "birthday" ? "Имя именинника…" : "Новая задача…";
     inputEl().focus();
   }
 
@@ -174,9 +267,15 @@ const TasksView = (() => {
       inputEl().focus();
       return;
     }
-    Storage.addTask(currentDateKey, text);
+    if (addMode === "birthday") {
+      Storage.addBirthday(currentDateKey, text);
+    } else {
+      Storage.addTask(currentDateKey, text);
+    }
     inputEl().value = "";
     formEl().hidden = true;
+    addMode = "task";
+    inputEl().placeholder = "Новая задача…";
     notifyChange();
     render();
   }
@@ -195,7 +294,7 @@ const TasksView = (() => {
 
   function startDrag(item, event) {
     const list = listEl();
-    const items = [...list.querySelectorAll(".task-item")];
+    const items = [...list.querySelectorAll(".task-item:not(.birthday-item)")];
     const index = items.indexOf(item);
     if (index < 0) return;
 
@@ -203,8 +302,6 @@ const TasksView = (() => {
       item,
       startY: event.clientY,
       offsetY: 0,
-      order: items.map((el) => el.dataset.id),
-      heights: items.map((el) => el.getBoundingClientRect().height),
       pointerId: event.pointerId,
     };
 
@@ -231,7 +328,7 @@ const TasksView = (() => {
     dragState.item.style.transform = `translateY(${dy}px)`;
 
     const list = listEl();
-    const items = [...list.querySelectorAll(".task-item")];
+    const items = [...list.querySelectorAll(".task-item:not(.birthday-item)")];
     const from = items.indexOf(dragState.item);
     if (from < 0) return;
 
@@ -270,7 +367,9 @@ const TasksView = (() => {
       /* ignore */
     }
 
-    const orderedIds = [...listEl().querySelectorAll(".task-item")].map((el) => el.dataset.id);
+    const orderedIds = [...listEl().querySelectorAll(".task-item:not(.birthday-item)")].map(
+      (el) => el.dataset.id
+    );
     Storage.reorderTasks(currentDateKey, orderedIds);
     dragState = null;
     notifyChange();
@@ -279,7 +378,8 @@ const TasksView = (() => {
 
   function init(handlers = {}) {
     onChange = handlers.onChange || (() => {});
-    document.getElementById("addTaskBtn").addEventListener("click", openAddForm);
+    document.getElementById("addTaskBtn").addEventListener("click", () => openAddForm("task"));
+    document.getElementById("addBirthdayBtn").addEventListener("click", () => openAddForm("birthday"));
     formEl().addEventListener("submit", submitAdd);
     document.getElementById("confirmCancel").addEventListener("click", closeConfirm);
     document.getElementById("confirmOk").addEventListener("click", confirmDelete);
