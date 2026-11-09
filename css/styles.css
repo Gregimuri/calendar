@@ -394,28 +394,27 @@ input {
 
 .task-item {
   display: grid;
-  grid-template-columns: 40px 1fr 36px 36px;
+  grid-template-columns: 40px 1fr;
   align-items: start;
   gap: 4px;
   background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: var(--radius);
-  padding: 10px 8px 10px 10px;
+  padding: 10px 12px 10px 10px;
   box-shadow: 0 2px 10px rgba(61, 58, 46, 0.04);
   touch-action: pan-y;
   transition: box-shadow 0.2s ease, transform 0.15s ease, opacity 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .task-item.dragging {
-  opacity: 0.92;
+  opacity: 0.95;
   box-shadow: var(--shadow);
-  transform: scale(1.02);
-  z-index: 5;
+  scale: 1.02;
+  z-index: 20;
   touch-action: none;
-}
-
-.task-item.drag-over {
-  border-color: var(--accent);
+  cursor: grabbing;
 }
 
 .birthday-item {
@@ -424,12 +423,12 @@ input {
 }
 
 .separator-item {
-  grid-template-columns: 1fr 36px 36px;
+  grid-template-columns: 1fr;
   align-items: center;
   background: color-mix(in srgb, var(--bg-soft) 70%, var(--card));
   border: 1px dashed color-mix(in srgb, var(--accent) 40%, var(--card-border));
   box-shadow: none;
-  padding: 4px 8px 4px 12px;
+  padding: 4px 12px;
   min-height: 20px;
 }
 
@@ -444,7 +443,6 @@ input {
   border-radius: 999px;
   background: var(--accent);
   opacity: 0.7;
-  margin-right: 4px;
 }
 
 .birthday-icon {
@@ -461,9 +459,62 @@ input {
   font-weight: 600;
 }
 
-.task-handle-spacer {
-  width: 36px;
-  min-height: 36px;
+.delete-dropzone {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 16px 14px;
+  background: linear-gradient(
+    180deg,
+    rgba(212, 90, 58, 0.95) 0%,
+    rgba(212, 90, 58, 0.82) 70%,
+    rgba(212, 90, 58, 0) 100%
+  );
+  color: #fffdf5;
+  animation: rise 0.2s ease;
+}
+
+.delete-dropzone[hidden] {
+  display: none;
+}
+
+.delete-dropzone-inner {
+  width: min(100%, 440px);
+  margin: 0 auto;
+  min-height: 56px;
+  border: 2px dashed rgba(255, 253, 245, 0.65);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+.delete-dropzone-inner svg {
+  width: 24px;
+  height: 24px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+.delete-dropzone.active .delete-dropzone-inner {
+  background: rgba(255, 253, 245, 0.18);
+  border-color: #fffdf5;
+  transform: scale(1.02);
+}
+
+body.is-dragging-item {
+  overflow: hidden;
+  touch-action: none;
 }
 
 .task-check {
@@ -513,6 +564,8 @@ input {
   white-space: pre-wrap;
   border-radius: 10px;
   outline: none;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .task-item.done .task-text {
@@ -525,65 +578,6 @@ input {
   box-shadow: inset 0 0 0 1px var(--accent);
   text-decoration: none;
   color: var(--text);
-}
-
-.task-delete {
-  width: 36px;
-  height: 36px;
-  margin-top: 2px;
-  border: none;
-  border-radius: 10px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  transition: color 0.15s ease, background 0.15s ease;
-}
-
-.task-delete svg {
-  width: 18px;
-  height: 18px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.task-delete:active {
-  color: var(--day-off);
-  background: rgba(212, 90, 58, 0.12);
-}
-
-.task-handle {
-  width: 36px;
-  min-height: 36px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: grab;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 8px 0;
-  touch-action: none;
-  user-select: none;
-}
-
-.task-handle:active {
-  cursor: grabbing;
-}
-
-.task-handle span {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: currentColor;
-  display: block;
 }
 
 .empty-hint {

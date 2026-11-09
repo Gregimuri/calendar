@@ -1,8 +1,12 @@
 const TasksView = (() => {
+  const LONG_PRESS_MS = 420;
+  const MOVE_TOLERANCE = 10;
+
   let currentDateKey = null;
   let onChange = () => {};
-  let pendingDelete = null; // { type: 'task'|'birthday', id, label }
-  let addMode = "task"; // 'task' | 'birthday'
+  let pendingDelete = null;
+  let addMode = "task";
+  let dragState = null;
 
   const listEl = () => document.getElementById("taskList");
   const emptyEl = () => document.getElementById("emptyHint");
@@ -13,18 +17,11 @@ const TasksView = (() => {
   const overlayEl = () => document.getElementById("confirmOverlay");
   const confirmTextEl = () => document.getElementById("confirmText");
   const confirmTitleEl = () => document.getElementById("confirmTitle");
+  const dropzoneEl = () => document.getElementById("deleteDropzone");
 
   const CHECK_SVG = `
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <polyline points="5 13 10 18 19 7"></polyline>
-    </svg>
-  `;
-
-  const TRASH_SVG = `
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 7h14"></path>
-      <path d="M10 7V5h4v2"></path>
-      <path d="M8 7l1 12h6l1-12"></path>
     </svg>
   `;
 
@@ -36,6 +33,7 @@ const TasksView = (() => {
     inputEl().value = "";
     addMode = "task";
     closeConfirm();
+    hideDropzone();
     render();
   }
 
@@ -44,6 +42,8 @@ const TasksView = (() => {
     sectionEl().hidden = true;
     formEl().hidden = true;
     closeConfirm();
+    hideDropzone();
+    cancelPendingDrag();
   }
 
   function render() {
@@ -68,34 +68,15 @@ const TasksView = (() => {
     const li = document.createElement("li");
     li.className = "task-item separator-item";
     li.dataset.id = item.id;
+    li.dataset.kind = "separator";
+    li.dataset.label = "Разделительная линия";
 
     const line = document.createElement("div");
     line.className = "separator-line";
     line.setAttribute("aria-hidden", "true");
-
-    const del = document.createElement("button");
-    del.type = "button";
-    del.className = "task-delete";
-    del.setAttribute("aria-label", "Удалить разделитель");
-    del.innerHTML = TRASH_SVG;
-    del.addEventListener("click", () => {
-      openConfirm({
-        type: "separator",
-        id: item.id,
-        label: "Разделительная линия",
-      });
-    });
-
-    const handle = document.createElement("button");
-    handle.type = "button";
-    handle.className = "task-handle";
-    handle.setAttribute("aria-label", "Перетащить разделитель");
-    handle.innerHTML = "<span></span><span></span><span></span>";
-    bindDrag(handle, li);
-
     li.appendChild(line);
-    li.appendChild(del);
-    li.appendChild(handle);
+
+    bindLongPressDrag(li, { editable: false });
     return li;
   }
 
@@ -103,6 +84,8 @@ const TasksView = (() => {
     const li = document.createElement("li");
     li.className = "task-item birthday-item";
     li.dataset.id = entry.id;
+    li.dataset.kind = "birthday";
+    li.dataset.label = entry.name;
 
     const icon = document.createElement("span");
     icon.className = "birthday-icon";
@@ -131,6 +114,7 @@ const TasksView = (() => {
       }
       if (next !== entry.name) {
         Storage.updateBirthday(entry.id, { name: next });
+        li.dataset.label = next;
         notifyChange();
       }
       text.textContent = next;
@@ -147,27 +131,9 @@ const TasksView = (() => {
       }
     });
 
-    const del = document.createElement("button");
-    del.type = "button";
-    del.className = "task-delete";
-    del.setAttribute("aria-label", "Удалить день рождения");
-    del.innerHTML = TRASH_SVG;
-    del.addEventListener("click", () => {
-      openConfirm({
-        type: "birthday",
-        id: entry.id,
-        label: entry.name,
-      });
-    });
-
-    const spacer = document.createElement("span");
-    spacer.className = "task-handle-spacer";
-    spacer.setAttribute("aria-hidden", "true");
-
     li.appendChild(icon);
     li.appendChild(text);
-    li.appendChild(del);
-    li.appendChild(spacer);
+    bindLongPressDrag(li, { editable: true });
     return li;
   }
 
@@ -175,16 +141,22 @@ const TasksView = (() => {
     const li = document.createElement("li");
     li.className = "task-item" + (task.done ? " done" : "");
     li.dataset.id = task.id;
+    li.dataset.kind = "task";
+    li.dataset.label = task.text;
 
     const check = document.createElement("button");
     check.type = "button";
     check.className = "task-check";
     check.setAttribute("aria-label", task.done ? "Отметить невыполненной" : "Отметить выполненной");
     check.innerHTML = CHECK_SVG;
-    check.addEventListener("click", () => {
+    check.addEventListener("click", (event) => {
+      event.stopPropagation();
       Storage.updateTask(currentDateKey, task.id, { done: !task.done });
       notifyChange();
       render();
+    });
+    check.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
     });
 
     const text = document.createElement("p");
@@ -209,6 +181,7 @@ const TasksView = (() => {
       }
       if (next !== task.text) {
         Storage.updateTask(currentDateKey, task.id, { text: next });
+        li.dataset.label = next;
         notifyChange();
       }
     });
@@ -224,30 +197,9 @@ const TasksView = (() => {
       }
     });
 
-    const del = document.createElement("button");
-    del.type = "button";
-    del.className = "task-delete";
-    del.setAttribute("aria-label", "Удалить задачу");
-    del.innerHTML = TRASH_SVG;
-    del.addEventListener("click", () => {
-      openConfirm({
-        type: "task",
-        id: task.id,
-        label: task.text,
-      });
-    });
-
-    const handle = document.createElement("button");
-    handle.type = "button";
-    handle.className = "task-handle";
-    handle.setAttribute("aria-label", "Перетащить задачу");
-    handle.innerHTML = "<span></span><span></span><span></span>";
-    bindDrag(handle, li);
-
     li.appendChild(check);
     li.appendChild(text);
-    li.appendChild(del);
-    li.appendChild(handle);
+    bindLongPressDrag(li, { editable: true });
     return li;
   }
 
@@ -301,7 +253,6 @@ const TasksView = (() => {
 
   function openAddForm(mode) {
     if (!currentDateKey) return;
-    // Second tap on + with empty field → create separator immediately
     if (
       mode === "task" &&
       addMode === "task" &&
@@ -349,60 +300,151 @@ const TasksView = (() => {
     render();
   }
 
-  /* ---- Drag & drop (pointer events) ---- */
+  /* ---- Long-press drag + top trash dropzone ---- */
 
-  let dragState = null;
+  function showDropzone() {
+    dropzoneEl().hidden = false;
+    document.body.classList.add("is-dragging-item");
+  }
 
-  function bindDrag(handle, item) {
-    handle.addEventListener("pointerdown", (event) => {
+  function hideDropzone() {
+    const zone = dropzoneEl();
+    zone.hidden = true;
+    zone.classList.remove("active");
+    document.body.classList.remove("is-dragging-item");
+  }
+
+  function isOverDropzone(clientX, clientY) {
+    const zone = dropzoneEl();
+    if (zone.hidden) return false;
+    const rect = zone.getBoundingClientRect();
+    return (
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom
+    );
+  }
+
+  function cancelPendingDrag() {
+    if (!dragState) return;
+    if (dragState.timer) clearTimeout(dragState.timer);
+    cleanupDragListeners(dragState);
+    if (dragState.item) {
+      dragState.item.classList.remove("dragging");
+      dragState.item.style.transform = "";
+      dragState.item.style.zIndex = "";
+    }
+    hideDropzone();
+    dragState = null;
+  }
+
+  function cleanupDragListeners(state) {
+    if (!state) return;
+    window.removeEventListener("pointermove", onPointerMove);
+    window.removeEventListener("pointerup", onPointerUp);
+    window.removeEventListener("pointercancel", onPointerUp);
+  }
+
+  function bindLongPressDrag(item) {
+    item.addEventListener("pointerdown", (event) => {
       if (event.button !== undefined && event.button !== 0) return;
-      event.preventDefault();
-      startDrag(item, event);
+      if (event.target.closest(".task-check")) return;
+
+      cancelPendingDrag();
+
+      dragState = {
+        item,
+        kind: item.dataset.kind,
+        id: item.dataset.id,
+        label: item.dataset.label || "",
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        lastY: event.clientY,
+        activated: false,
+        overTrash: false,
+        timer: null,
+        startTop: item.getBoundingClientRect().top,
+      };
+
+      dragState.timer = setTimeout(() => {
+        if (!dragState || dragState.item !== item) return;
+        activateDrag(event.clientY);
+      }, LONG_PRESS_MS);
+
+      window.addEventListener("pointermove", onPointerMove);
+      window.addEventListener("pointerup", onPointerUp);
+      window.addEventListener("pointercancel", onPointerUp);
     });
   }
 
-  function startDrag(item, event) {
-    const list = listEl();
-    const items = [...list.querySelectorAll(".task-item:not(.birthday-item)")];
-    const index = items.indexOf(item);
-    if (index < 0) return;
+  function activateDrag(clientY) {
+    if (!dragState) return;
+    dragState.activated = true;
+    dragState.timer = null;
+    dragState.lastY = clientY;
+    dragState.startY = clientY;
 
-    dragState = {
-      item,
-      startY: event.clientY,
-      offsetY: 0,
-      pointerId: event.pointerId,
-    };
+    const active = document.activeElement;
+    if (active && dragState.item.contains(active) && typeof active.blur === "function") {
+      active.blur();
+    }
 
-    item.classList.add("dragging");
-    handleSetPointerCapture(item, event.pointerId);
+    dragState.item.classList.add("dragging");
+    showDropzone();
 
-    item.addEventListener("pointermove", onPointerMove);
-    item.addEventListener("pointerup", onPointerUp);
-    item.addEventListener("pointercancel", onPointerUp);
-  }
+    if (navigator.vibrate) {
+      try {
+        navigator.vibrate(18);
+      } catch {
+        /* ignore */
+      }
+    }
 
-  function handleSetPointerCapture(el, pointerId) {
     try {
-      el.setPointerCapture(pointerId);
+      dragState.item.setPointerCapture(dragState.pointerId);
     } catch {
       /* ignore */
     }
   }
 
   function onPointerMove(event) {
-    if (!dragState) return;
-    const dy = event.clientY - dragState.startY;
-    dragState.offsetY = dy;
-    dragState.item.style.transform = `translateY(${dy}px)`;
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
 
+    const dx = event.clientX - dragState.startX;
+    const dy = event.clientY - dragState.startY;
+
+    if (!dragState.activated) {
+      if (Math.abs(dx) > MOVE_TOLERANCE || Math.abs(dy) > MOVE_TOLERANCE) {
+        clearTimeout(dragState.timer);
+        cleanupDragListeners(dragState);
+        dragState = null;
+      }
+      return;
+    }
+
+    event.preventDefault();
+    const offsetY = event.clientY - dragState.startY;
+    dragState.item.style.transform = `translateY(${offsetY}px)`;
+
+    const overTrash = isOverDropzone(event.clientX, event.clientY);
+    dragState.overTrash = overTrash;
+    dropzoneEl().classList.toggle("active", overTrash);
+
+    if (!overTrash && dragState.kind !== "birthday") {
+      reorderWhileDragging(event.clientY);
+    }
+  }
+
+  function reorderWhileDragging(clientY) {
     const list = listEl();
     const items = [...list.querySelectorAll(".task-item:not(.birthday-item)")];
     const from = items.indexOf(dragState.item);
     if (from < 0) return;
 
     let target = from;
-    const mid = dragState.item.getBoundingClientRect().top + dragState.item.offsetHeight / 2;
+    const mid = clientY;
 
     items.forEach((el, i) => {
       if (el === dragState.item) return;
@@ -415,33 +457,49 @@ const TasksView = (() => {
     if (target !== from) {
       const ref = target > from ? items[target].nextSibling : items[target];
       list.insertBefore(dragState.item, ref);
-      dragState.startY = event.clientY;
+      dragState.startY = clientY;
       dragState.item.style.transform = "translateY(0)";
     }
   }
 
-  function onPointerUp() {
-    if (!dragState) return;
-    const { item, pointerId } = dragState;
-    item.classList.remove("dragging");
-    item.style.transform = "";
+  function onPointerUp(event) {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
 
-    item.removeEventListener("pointermove", onPointerMove);
-    item.removeEventListener("pointerup", onPointerUp);
-    item.removeEventListener("pointercancel", onPointerUp);
+    const state = dragState;
+    if (state.timer) clearTimeout(state.timer);
+
+    cleanupDragListeners(state);
 
     try {
-      item.releasePointerCapture(pointerId);
+      state.item.releasePointerCapture(state.pointerId);
     } catch {
       /* ignore */
     }
 
-    const orderedIds = [...listEl().querySelectorAll(".task-item:not(.birthday-item)")].map(
-      (el) => el.dataset.id
-    );
-    Storage.reorderTasks(currentDateKey, orderedIds);
+    state.item.classList.remove("dragging");
+    state.item.style.transform = "";
+    hideDropzone();
     dragState = null;
-    notifyChange();
+
+    if (!state.activated) return;
+
+    if (state.overTrash) {
+      openConfirm({
+        type: state.kind,
+        id: state.id,
+        label: state.label,
+      });
+      render();
+      return;
+    }
+
+    if (state.kind !== "birthday" && currentDateKey) {
+      const orderedIds = [...listEl().querySelectorAll(".task-item:not(.birthday-item)")].map(
+        (el) => el.dataset.id
+      );
+      Storage.reorderTasks(currentDateKey, orderedIds);
+      notifyChange();
+    }
     render();
   }
 

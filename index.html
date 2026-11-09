@@ -9,9 +9,20 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=7" />
+  <link rel="stylesheet" href="css/styles.css?v=8" />
 </head>
 <body>
+  <div class="delete-dropzone" id="deleteDropzone" hidden aria-hidden="true">
+    <div class="delete-dropzone-inner">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 7h14"></path>
+        <path d="M10 7V5h4v2"></path>
+        <path d="M8 7l1 12h6l1-12"></path>
+      </svg>
+      <span>Перетащите сюда, чтобы удалить</span>
+    </div>
+  </div>
+
   <div class="app">
     <header class="app-header">
       <button type="button" class="nav-btn" id="prevMonth" aria-label="Предыдущий месяц">‹</button>
@@ -75,9 +86,9 @@
     </div>
   </div>
 
-  <script src="js/storage.js?v=7"></script>
-  <script src="js/calendar.js?v=7"></script>
-  <script src="js/tasks.js?v=7"></script>
-  <script src="js/app.js?v=7"></script>
+  <script src="js/storage.js?v=8"></script>
+  <script src="js/calendar.js?v=8"></script>
+  <script src="js/tasks.js?v=8"></script>
+  <script src="js/app.js?v=8"></script>
 </body>
 </html>
