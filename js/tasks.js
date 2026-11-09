@@ -111,7 +111,7 @@ const TasksView = (() => {
 
     const text = document.createElement("p");
     text.className = "task-text birthday-text";
-    text.textContent = `День рождения: ${entry.name}`;
+    text.textContent = entry.name;
     text.contentEditable = "true";
     text.setAttribute("role", "textbox");
     text.setAttribute("aria-label", "Имя именинника");
@@ -121,20 +121,19 @@ const TasksView = (() => {
 
     text.addEventListener("focus", () => {
       draft = entry.name;
-      text.textContent = entry.name;
     });
 
     text.addEventListener("blur", () => {
       const next = (text.textContent || "").trim();
       if (!next) {
-        text.textContent = `День рождения: ${draft || entry.name}`;
+        text.textContent = draft || entry.name;
         return;
       }
       if (next !== entry.name) {
         Storage.updateBirthday(entry.id, { name: next });
         notifyChange();
       }
-      text.textContent = `День рождения: ${next}`;
+      text.textContent = next;
     });
 
     text.addEventListener("keydown", (event) => {
@@ -143,7 +142,7 @@ const TasksView = (() => {
         text.blur();
       }
       if (event.key === "Escape") {
-        text.textContent = `День рождения: ${entry.name}`;
+        text.textContent = entry.name;
         text.blur();
       }
     });
