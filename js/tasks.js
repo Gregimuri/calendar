@@ -403,6 +403,7 @@ const TasksView = (() => {
     window.removeEventListener("pointercancel", onPointerUp, LISTENER_OPTS);
     window.removeEventListener("touchmove", onTouchMoveGuard, LISTENER_OPTS);
     window.removeEventListener("contextmenu", onDragContextMenu, LISTENER_OPTS);
+    window.removeEventListener("selectstart", onDragSelectStart, LISTENER_OPTS);
   }
 
   function onDragContextMenu(event) {
@@ -415,6 +416,7 @@ const TasksView = (() => {
       if (event.target.closest(".task-check")) return;
 
       cancelPendingDrag();
+      clearTextSelection();
 
       item.style.touchAction = "none";
       item.classList.add("press-hold");
@@ -444,7 +446,12 @@ const TasksView = (() => {
       window.addEventListener("pointercancel", onPointerUp, LISTENER_OPTS);
       window.addEventListener("touchmove", onTouchMoveGuard, LISTENER_OPTS);
       window.addEventListener("contextmenu", onDragContextMenu, LISTENER_OPTS);
+      window.addEventListener("selectstart", onDragSelectStart, LISTENER_OPTS);
     });
+  }
+
+  function onDragSelectStart(event) {
+    if (dragState) event.preventDefault();
   }
 
   // Blocks page scroll while holding / dragging (required on mobile)
@@ -462,6 +469,13 @@ const TasksView = (() => {
     }
   }
 
+  function clearTextSelection() {
+    const selection = window.getSelection && window.getSelection();
+    if (selection && selection.removeAllRanges) {
+      selection.removeAllRanges();
+    }
+  }
+
   function activateDrag(clientY) {
     if (!dragState) return;
     dragState.activated = true;
@@ -475,6 +489,7 @@ const TasksView = (() => {
       active.blur();
     }
 
+    clearTextSelection();
     dragState.item.classList.add("dragging");
     showDropzone();
 

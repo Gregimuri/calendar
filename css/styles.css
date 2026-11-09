@@ -567,8 +567,9 @@ body.is-dragging-item {
   white-space: pre-wrap;
   border-radius: 10px;
   outline: none;
-  user-select: text;
-  -webkit-user-select: text;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .task-item.done .task-text {
@@ -579,6 +580,17 @@ body.is-dragging-item {
 .task-text.task-text-readonly {
   cursor: default;
   caret-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  pointer-events: auto;
+}
+
+.task-item.press-hold .task-text,
+.task-item.dragging .task-text {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
 }
 
 .task-text[contenteditable="true"]:focus {
@@ -588,6 +600,8 @@ body.is-dragging-item {
   color: var(--text);
   caret-color: auto;
   cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .empty-hint {
