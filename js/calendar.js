@@ -163,10 +163,13 @@ const CalendarView = (() => {
 
       const md = `${String(cell.date.getMonth() + 1).padStart(2, "0")}-${String(cell.date.getDate()).padStart(2, "0")}`;
       if (birthdayDays.has(md)) {
-        const gift = document.createElement("span");
-        gift.className = "day-gift";
+        const gift = document.createElement("img");
+        gift.className = "day-gift star-icon";
+        gift.src = "assets/star.png";
+        gift.alt = "";
+        gift.width = 10;
+        gift.height = 10;
         gift.setAttribute("aria-hidden", "true");
-        gift.textContent = "🎁";
         markers.appendChild(gift);
       }
 

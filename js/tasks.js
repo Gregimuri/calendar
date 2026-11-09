@@ -87,10 +87,13 @@ const TasksView = (() => {
     li.dataset.kind = "birthday";
     li.dataset.label = entry.name;
 
-    const icon = document.createElement("span");
-    icon.className = "birthday-icon";
+    const icon = document.createElement("img");
+    icon.className = "birthday-icon star-icon";
+    icon.src = "assets/star.png";
+    icon.alt = "";
+    icon.width = 28;
+    icon.height = 28;
     icon.setAttribute("aria-hidden", "true");
-    icon.textContent = "🎁";
 
     const text = document.createElement("p");
     text.className = "task-text birthday-text";

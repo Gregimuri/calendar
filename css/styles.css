@@ -221,9 +221,10 @@ input {
 }
 
 .day-gift {
-  font-size: 0.55rem;
-  line-height: 1;
+  width: 10px;
+  height: 10px;
   display: block;
+  object-fit: contain;
 }
 
 .day-dot {
@@ -312,14 +313,12 @@ input {
   transition: transform 0.15s ease, background 0.2s ease;
 }
 
-.gift-btn svg {
-  width: 22px;
-  height: 22px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.gift-btn .star-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
 }
 
 .gift-btn:active {
@@ -446,13 +445,11 @@ input {
 }
 
 .birthday-icon {
-  width: 36px;
-  height: 36px;
-  margin-top: 2px;
-  display: grid;
-  place-items: center;
-  font-size: 1.2rem;
-  line-height: 1;
+  width: 28px;
+  height: 28px;
+  margin-top: 6px;
+  object-fit: contain;
+  display: block;
 }
 
 .birthday-text {

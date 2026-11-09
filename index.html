@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/styles.css?v=8" />
+  <link rel="stylesheet" href="css/styles.css?v=9" />
 </head>
 <body>
   <div class="delete-dropzone" id="deleteDropzone" hidden aria-hidden="true">
@@ -46,12 +46,7 @@
         <h2 class="tasks-date" id="tasksDateLabel"></h2>
         <div class="header-actions">
           <button type="button" class="gift-btn" id="addBirthdayBtn" aria-label="Добавить день рождения">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <rect x="4" y="11" width="16" height="10" rx="1.5"></rect>
-              <path d="M12 7v14"></path>
-              <path d="M4 15h16"></path>
-              <path d="M12 7c-2.2 0-3.5-1.6-3.5-3S10.2 2 12 4.2 15.5 2 15.5 4 14.2 7 12 7z"></path>
-            </svg>
+            <img src="assets/star.png" alt="" class="star-icon" width="24" height="24" />
           </button>
           <button type="button" class="add-btn" id="addTaskBtn" aria-label="Добавить задачу">+</button>
         </div>
@@ -71,7 +66,7 @@
       </form>
 
       <ul class="task-list" id="taskList" aria-live="polite"></ul>
-      <p class="empty-hint" id="emptyHint">Пока нет записей. Нажмите + или 🎁, чтобы добавить.</p>
+      <p class="empty-hint" id="emptyHint">Пока нет записей. Нажмите + или ★, чтобы добавить.</p>
     </section>
   </div>
 
@@ -86,9 +81,9 @@
     </div>
   </div>
 
-  <script src="js/storage.js?v=8"></script>
-  <script src="js/calendar.js?v=8"></script>
-  <script src="js/tasks.js?v=8"></script>
-  <script src="js/app.js?v=8"></script>
+  <script src="js/storage.js?v=9"></script>
+  <script src="js/calendar.js?v=9"></script>
+  <script src="js/tasks.js?v=9"></script>
+  <script src="js/app.js?v=9"></script>
 </body>
 </html>
