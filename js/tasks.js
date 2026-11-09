@@ -1,6 +1,7 @@
 const TasksView = (() => {
-  const LONG_PRESS_MS = 420;
-  const MOVE_TOLERANCE = 10;
+  const LONG_PRESS_MS = 380;
+  const MOVE_TOLERANCE = 14;
+  const LISTENER_OPTS = { passive: false };
 
   let currentDateKey = null;
   let onChange = () => {};
@@ -379,24 +380,33 @@ const TasksView = (() => {
     );
   }
 
+  function restoreItemTouch(item) {
+    if (!item) return;
+    item.style.touchAction = "";
+    item.classList.remove("dragging", "press-hold");
+    item.style.transform = "";
+    item.style.zIndex = "";
+  }
+
   function cancelPendingDrag() {
     if (!dragState) return;
     if (dragState.timer) clearTimeout(dragState.timer);
-    cleanupDragListeners(dragState);
-    if (dragState.item) {
-      dragState.item.classList.remove("dragging");
-      dragState.item.style.transform = "";
-      dragState.item.style.zIndex = "";
-    }
+    cleanupDragListeners();
+    restoreItemTouch(dragState.item);
     hideDropzone();
     dragState = null;
   }
 
-  function cleanupDragListeners(state) {
-    if (!state) return;
-    window.removeEventListener("pointermove", onPointerMove);
-    window.removeEventListener("pointerup", onPointerUp);
-    window.removeEventListener("pointercancel", onPointerUp);
+  function cleanupDragListeners() {
+    window.removeEventListener("pointermove", onPointerMove, LISTENER_OPTS);
+    window.removeEventListener("pointerup", onPointerUp, LISTENER_OPTS);
+    window.removeEventListener("pointercancel", onPointerUp, LISTENER_OPTS);
+    window.removeEventListener("touchmove", onTouchMoveGuard, LISTENER_OPTS);
+    window.removeEventListener("contextmenu", onDragContextMenu, LISTENER_OPTS);
+  }
+
+  function onDragContextMenu(event) {
+    if (dragState) event.preventDefault();
   }
 
   function bindLongPressDrag(item) {
@@ -406,6 +416,9 @@ const TasksView = (() => {
 
       cancelPendingDrag();
 
+      item.style.touchAction = "none";
+      item.classList.add("press-hold");
+
       dragState = {
         item,
         kind: item.dataset.kind,
@@ -414,22 +427,39 @@ const TasksView = (() => {
         pointerId: event.pointerId,
         startX: event.clientX,
         startY: event.clientY,
+        lastX: event.clientX,
         lastY: event.clientY,
         activated: false,
         overTrash: false,
         timer: null,
-        startTop: item.getBoundingClientRect().top,
       };
 
       dragState.timer = setTimeout(() => {
         if (!dragState || dragState.item !== item) return;
-        activateDrag(event.clientY);
+        activateDrag(dragState.lastY);
       }, LONG_PRESS_MS);
 
-      window.addEventListener("pointermove", onPointerMove);
-      window.addEventListener("pointerup", onPointerUp);
-      window.addEventListener("pointercancel", onPointerUp);
+      window.addEventListener("pointermove", onPointerMove, LISTENER_OPTS);
+      window.addEventListener("pointerup", onPointerUp, LISTENER_OPTS);
+      window.addEventListener("pointercancel", onPointerUp, LISTENER_OPTS);
+      window.addEventListener("touchmove", onTouchMoveGuard, LISTENER_OPTS);
+      window.addEventListener("contextmenu", onDragContextMenu, LISTENER_OPTS);
     });
+  }
+
+  // Blocks page scroll while holding / dragging (required on mobile)
+  function onTouchMoveGuard(event) {
+    if (!dragState) return;
+    if (dragState.activated) {
+      event.preventDefault();
+      return;
+    }
+    const touch = event.touches[0];
+    if (!touch) return;
+    const dist = Math.hypot(touch.clientX - dragState.startX, touch.clientY - dragState.startY);
+    if (dist <= MOVE_TOLERANCE) {
+      event.preventDefault();
+    }
   }
 
   function activateDrag(clientY) {
@@ -438,6 +468,7 @@ const TasksView = (() => {
     dragState.timer = null;
     dragState.lastY = clientY;
     dragState.startY = clientY;
+    dragState.startX = dragState.lastX;
 
     const active = document.activeElement;
     if (active && dragState.item.contains(active) && typeof active.blur === "function") {
@@ -465,13 +496,17 @@ const TasksView = (() => {
   function onPointerMove(event) {
     if (!dragState || event.pointerId !== dragState.pointerId) return;
 
+    dragState.lastX = event.clientX;
+    dragState.lastY = event.clientY;
+
     const dx = event.clientX - dragState.startX;
     const dy = event.clientY - dragState.startY;
 
     if (!dragState.activated) {
-      if (Math.abs(dx) > MOVE_TOLERANCE || Math.abs(dy) > MOVE_TOLERANCE) {
+      if (Math.hypot(dx, dy) > MOVE_TOLERANCE) {
         clearTimeout(dragState.timer);
-        cleanupDragListeners(dragState);
+        cleanupDragListeners();
+        restoreItemTouch(dragState.item);
         dragState = null;
       }
       return;
@@ -497,14 +532,12 @@ const TasksView = (() => {
     if (from < 0) return;
 
     let target = from;
-    const mid = clientY;
-
     items.forEach((el, i) => {
       if (el === dragState.item) return;
       const rect = el.getBoundingClientRect();
       const center = rect.top + rect.height / 2;
-      if (from < i && mid > center) target = i;
-      if (from > i && mid < center) target = i;
+      if (from < i && clientY > center) target = i;
+      if (from > i && clientY < center) target = i;
     });
 
     if (target !== from) {
@@ -516,12 +549,13 @@ const TasksView = (() => {
   }
 
   function onPointerUp(event) {
-    if (!dragState || event.pointerId !== dragState.pointerId) return;
+    if (!dragState) return;
+    if (event.pointerId !== undefined && event.pointerId !== dragState.pointerId) return;
 
     const state = dragState;
     if (state.timer) clearTimeout(state.timer);
 
-    cleanupDragListeners(state);
+    cleanupDragListeners();
 
     try {
       state.item.releasePointerCapture(state.pointerId);
@@ -529,8 +563,7 @@ const TasksView = (() => {
       /* ignore */
     }
 
-    state.item.classList.remove("dragging");
-    state.item.style.transform = "";
+    restoreItemTouch(state.item);
     hideDropzone();
     dragState = null;
 
