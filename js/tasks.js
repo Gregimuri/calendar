@@ -290,19 +290,44 @@ const TasksView = (() => {
     onChange();
   }
 
+  function syncSubmitLabel() {
+    const btn = formEl().querySelector(".add-submit");
+    if (!btn) return;
+    if (addMode === "birthday") {
+      btn.textContent = "Готово";
+      return;
+    }
+    btn.textContent = inputEl().value.trim() ? "Готово" : "Разделитель";
+  }
+
   function openAddForm(mode) {
     if (!currentDateKey) return;
+    // Second tap on + with empty field → create separator immediately
+    if (
+      mode === "task" &&
+      addMode === "task" &&
+      !formEl().hidden &&
+      !inputEl().value.trim()
+    ) {
+      Storage.addSeparator(currentDateKey);
+      formEl().hidden = true;
+      inputEl().placeholder = "Новая задача…";
+      notifyChange();
+      render();
+      return;
+    }
     addMode = mode;
     formEl().hidden = false;
     inputEl().value = "";
     inputEl().placeholder = mode === "birthday"
       ? "Имя именинника…"
-      : "Новая задача… (пусто — разделитель)";
+      : "Текст задачи или пусто для линии";
+    syncSubmitLabel();
     inputEl().focus();
   }
 
   function submitAdd(event) {
-    event.preventDefault();
+    if (event) event.preventDefault();
     if (!currentDateKey) return;
     const text = inputEl().value.trim();
     if (addMode === "birthday") {
@@ -320,6 +345,7 @@ const TasksView = (() => {
     formEl().hidden = true;
     addMode = "task";
     inputEl().placeholder = "Новая задача…";
+    syncSubmitLabel();
     notifyChange();
     render();
   }
@@ -425,6 +451,13 @@ const TasksView = (() => {
     document.getElementById("addTaskBtn").addEventListener("click", () => openAddForm("task"));
     document.getElementById("addBirthdayBtn").addEventListener("click", () => openAddForm("birthday"));
     formEl().addEventListener("submit", submitAdd);
+    inputEl().addEventListener("input", syncSubmitLabel);
+    inputEl().addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        submitAdd(event);
+      }
+    });
     document.getElementById("confirmCancel").addEventListener("click", closeConfirm);
     document.getElementById("confirmOk").addEventListener("click", confirmDelete);
     overlayEl().addEventListener("click", (event) => {
