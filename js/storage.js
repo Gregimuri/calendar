@@ -71,6 +71,7 @@ const Storage = (() => {
     const tasks = getTasks(dateKey);
     const task = {
       id: createId(),
+      type: "task",
       text: text.trim(),
       done: false,
       order: tasks.length,
@@ -78,6 +79,28 @@ const Storage = (() => {
     tasks.push(task);
     setTasks(dateKey, tasks);
     return task;
+  }
+
+  function addSeparator(dateKey) {
+    const tasks = getTasks(dateKey);
+    const item = {
+      id: createId(),
+      type: "separator",
+      text: "",
+      done: true,
+      order: tasks.length,
+    };
+    tasks.push(item);
+    setTasks(dateKey, tasks);
+    return item;
+  }
+
+  function isSeparator(item) {
+    return item && item.type === "separator";
+  }
+
+  function realTasks(list) {
+    return list.filter((t) => !isSeparator(t));
   }
 
   function updateTask(dateKey, taskId, patch) {
@@ -111,9 +134,11 @@ const Storage = (() => {
     const map = {};
     for (const [dateKey, tasks] of Object.entries(all)) {
       if (!Array.isArray(tasks) || !tasks.length) continue;
-      const hasOpen = tasks.some((t) => !t.done);
-      const allDone = tasks.every((t) => t.done);
-      map[dateKey] = { hasOpen, allDone, count: tasks.length };
+      const items = realTasks(tasks);
+      if (!items.length) continue;
+      const hasOpen = items.some((t) => !t.done);
+      const allDone = items.every((t) => t.done);
+      map[dateKey] = { hasOpen, allDone, count: items.length };
     }
     return map;
   }
@@ -165,6 +190,8 @@ const Storage = (() => {
   return {
     getTasks,
     addTask,
+    addSeparator,
+    isSeparator,
     updateTask,
     deleteTask,
     reorderTasks,

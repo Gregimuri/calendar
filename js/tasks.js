@@ -58,8 +58,45 @@ const TasksView = (() => {
       list.appendChild(createBirthdayItem(b));
     });
     tasks.forEach((task) => {
-      list.appendChild(createTaskItem(task));
+      list.appendChild(
+        Storage.isSeparator(task) ? createSeparatorItem(task) : createTaskItem(task)
+      );
     });
+  }
+
+  function createSeparatorItem(item) {
+    const li = document.createElement("li");
+    li.className = "task-item separator-item";
+    li.dataset.id = item.id;
+
+    const line = document.createElement("div");
+    line.className = "separator-line";
+    line.setAttribute("aria-hidden", "true");
+
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "task-delete";
+    del.setAttribute("aria-label", "Удалить разделитель");
+    del.innerHTML = TRASH_SVG;
+    del.addEventListener("click", () => {
+      openConfirm({
+        type: "separator",
+        id: item.id,
+        label: "Разделительная линия",
+      });
+    });
+
+    const handle = document.createElement("button");
+    handle.type = "button";
+    handle.className = "task-handle";
+    handle.setAttribute("aria-label", "Перетащить разделитель");
+    handle.innerHTML = "<span></span><span></span><span></span>";
+    bindDrag(handle, li);
+
+    li.appendChild(line);
+    li.appendChild(del);
+    li.appendChild(handle);
+    return li;
   }
 
   function createBirthdayItem(entry) {
@@ -217,9 +254,12 @@ const TasksView = (() => {
 
   function openConfirm(item) {
     pendingDelete = item;
-    confirmTitleEl().textContent = item.type === "birthday"
-      ? "Удалить день рождения?"
-      : "Удалить задачу?";
+    const titles = {
+      birthday: "Удалить день рождения?",
+      separator: "Удалить разделитель?",
+      task: "Удалить задачу?",
+    };
+    confirmTitleEl().textContent = titles[item.type] || titles.task;
     const preview = item.label.length > 80 ? `${item.label.slice(0, 80)}…` : item.label;
     confirmTextEl().textContent = preview || "Без названия";
     overlayEl().hidden = false;
@@ -255,7 +295,9 @@ const TasksView = (() => {
     addMode = mode;
     formEl().hidden = false;
     inputEl().value = "";
-    inputEl().placeholder = mode === "birthday" ? "Имя именинника…" : "Новая задача…";
+    inputEl().placeholder = mode === "birthday"
+      ? "Имя именинника…"
+      : "Новая задача… (пусто — разделитель)";
     inputEl().focus();
   }
 
@@ -263,12 +305,14 @@ const TasksView = (() => {
     event.preventDefault();
     if (!currentDateKey) return;
     const text = inputEl().value.trim();
-    if (!text) {
-      inputEl().focus();
-      return;
-    }
     if (addMode === "birthday") {
+      if (!text) {
+        inputEl().focus();
+        return;
+      }
       Storage.addBirthday(currentDateKey, text);
+    } else if (!text) {
+      Storage.addSeparator(currentDateKey);
     } else {
       Storage.addTask(currentDateKey, text);
     }
