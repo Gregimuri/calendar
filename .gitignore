@@ -3,3 +3,15 @@
 .DS_Store
 Thumbs.db
 *.log
+node_modules/
+www/
+android/
+release/
+.gradle/
+local.properties
+*.iml
+.idea/
+
+# Keep the public APK for GitHub Pages downloads
+!apk/
+!apk/**/*.apk
