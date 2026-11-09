@@ -281,7 +281,20 @@ input {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin: 0 -4px 12px;
+  padding: 8px 4px 12px;
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 15;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg) 96%, transparent) 0%,
+      color-mix(in srgb, var(--bg) 92%, transparent) 70%,
+      color-mix(in srgb, var(--bg) 78%, transparent) 100%
+    );
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .tasks-date {
@@ -430,17 +443,23 @@ input {
 .separator-item {
   grid-template-columns: 1fr;
   align-items: center;
-  background: color-mix(in srgb, var(--bg-soft) 70%, var(--card));
-  border: 1px dashed color-mix(in srgb, var(--accent) 40%, var(--card-border));
+  background: transparent;
+  border: none;
   box-shadow: none;
   padding: 4px 12px;
   min-height: 20px;
 }
 
 .separator-item.dragging {
-  background: var(--card);
-  border-style: solid;
-  box-shadow: var(--shadow);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  opacity: 1;
+}
+
+.separator-item.dragging .separator-line {
+  opacity: 1;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 
 .separator-line {
