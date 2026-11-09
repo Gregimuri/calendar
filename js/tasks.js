@@ -7,6 +7,7 @@ const TasksView = (() => {
   let pendingDelete = null;
   let addMode = "task";
   let dragState = null;
+  let suppressTapUntil = 0;
 
   const listEl = () => document.getElementById("taskList");
   const emptyEl = () => document.getElementById("emptyHint");
@@ -80,6 +81,102 @@ const TasksView = (() => {
     return li;
   }
 
+  function bindDoubleTapEdit(text, options) {
+    let draft = options.getValue();
+    let lastTapAt = 0;
+    let editing = false;
+
+    text.contentEditable = "false";
+    text.setAttribute("role", "textbox");
+    text.setAttribute("aria-label", options.ariaLabel);
+    text.spellcheck = true;
+    text.classList.add("task-text-readonly");
+
+    function beginEdit() {
+      if (editing) return;
+      if (dragState && dragState.activated) return;
+      editing = true;
+      draft = options.getValue();
+      text.contentEditable = "true";
+      text.classList.remove("task-text-readonly");
+      text.focus();
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    function endEdit(save) {
+      if (!editing) {
+        text.contentEditable = "false";
+        text.classList.add("task-text-readonly");
+        return;
+      }
+      editing = false;
+      text.contentEditable = "false";
+      text.classList.add("task-text-readonly");
+
+      if (!save) {
+        text.textContent = draft;
+        return;
+      }
+
+      const next = (text.textContent || "").trim();
+      if (!next) {
+        text.textContent = draft || options.getValue();
+        return;
+      }
+      text.textContent = next;
+      if (next !== draft) {
+        options.onSave(next);
+      }
+    }
+
+    text.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      beginEdit();
+    });
+
+    text.addEventListener("pointerup", (event) => {
+      if (event.pointerType === "mouse") return;
+      if (Date.now() < suppressTapUntil) {
+        lastTapAt = 0;
+        return;
+      }
+      if (dragState && dragState.activated) {
+        lastTapAt = 0;
+        return;
+      }
+      const now = Date.now();
+      if (now - lastTapAt < 340) {
+        event.preventDefault();
+        beginEdit();
+        lastTapAt = 0;
+      } else {
+        lastTapAt = now;
+      }
+    });
+
+    text.addEventListener("blur", () => {
+      endEdit(true);
+    });
+
+    text.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        text.blur();
+      }
+      if (event.key === "Escape") {
+        event.preventDefault();
+        endEdit(false);
+        text.blur();
+      }
+    });
+  }
+
   function createBirthdayItem(entry) {
     const li = document.createElement("li");
     li.className = "task-item birthday-item";
@@ -98,45 +195,21 @@ const TasksView = (() => {
     const text = document.createElement("p");
     text.className = "task-text birthday-text";
     text.textContent = entry.name;
-    text.contentEditable = "true";
-    text.setAttribute("role", "textbox");
-    text.setAttribute("aria-label", "Имя именинника");
-    text.spellcheck = true;
 
-    let draft = entry.name;
-
-    text.addEventListener("focus", () => {
-      draft = entry.name;
-    });
-
-    text.addEventListener("blur", () => {
-      const next = (text.textContent || "").trim();
-      if (!next) {
-        text.textContent = draft || entry.name;
-        return;
-      }
-      if (next !== entry.name) {
+    bindDoubleTapEdit(text, {
+      ariaLabel: "Имя именинника",
+      getValue: () => entry.name,
+      onSave: (next) => {
         Storage.updateBirthday(entry.id, { name: next });
+        entry.name = next;
         li.dataset.label = next;
         notifyChange();
-      }
-      text.textContent = next;
-    });
-
-    text.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        text.blur();
-      }
-      if (event.key === "Escape") {
-        text.textContent = entry.name;
-        text.blur();
-      }
+      },
     });
 
     li.appendChild(icon);
     li.appendChild(text);
-    bindLongPressDrag(li, { editable: true });
+    bindLongPressDrag(li);
     return li;
   }
 
@@ -165,44 +238,21 @@ const TasksView = (() => {
     const text = document.createElement("p");
     text.className = "task-text";
     text.textContent = task.text;
-    text.contentEditable = "true";
-    text.setAttribute("role", "textbox");
-    text.setAttribute("aria-label", "Текст задачи");
-    text.spellcheck = true;
 
-    let draft = task.text;
-
-    text.addEventListener("focus", () => {
-      draft = text.textContent;
-    });
-
-    text.addEventListener("blur", () => {
-      const next = (text.textContent || "").trim();
-      if (!next) {
-        text.textContent = draft || task.text;
-        return;
-      }
-      if (next !== task.text) {
+    bindDoubleTapEdit(text, {
+      ariaLabel: "Текст задачи",
+      getValue: () => task.text,
+      onSave: (next) => {
         Storage.updateTask(currentDateKey, task.id, { text: next });
+        task.text = next;
         li.dataset.label = next;
         notifyChange();
-      }
-    });
-
-    text.addEventListener("keydown", (event) => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        text.blur();
-      }
-      if (event.key === "Escape") {
-        text.textContent = task.text;
-        text.blur();
-      }
+      },
     });
 
     li.appendChild(check);
     li.appendChild(text);
-    bindLongPressDrag(li, { editable: true });
+    bindLongPressDrag(li);
     return li;
   }
 
@@ -485,6 +535,8 @@ const TasksView = (() => {
     dragState = null;
 
     if (!state.activated) return;
+
+    suppressTapUntil = Date.now() + 450;
 
     if (state.overTrash) {
       openConfirm({

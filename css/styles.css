@@ -570,11 +570,18 @@ body.is-dragging-item {
   color: var(--text-muted);
 }
 
+.task-text.task-text-readonly {
+  cursor: default;
+  caret-color: transparent;
+}
+
 .task-text[contenteditable="true"]:focus {
   background: var(--bg-soft);
   box-shadow: inset 0 0 0 1px var(--accent);
   text-decoration: none;
   color: var(--text);
+  caret-color: auto;
+  cursor: text;
 }
 
 .empty-hint {
