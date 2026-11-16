@@ -196,7 +196,7 @@ const TasksView = (() => {
     );
     const star = document.createElement("img");
     star.className = "star-icon";
-    star.src = greeted ? "assets/star.png" : "assets/star-empty.png";
+    star.src = greeted ? "assets/star.png?v=19" : "assets/star-empty.png?v=19";
     star.alt = "";
     star.width = 28;
     star.height = 28;
