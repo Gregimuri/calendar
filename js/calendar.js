@@ -168,7 +168,7 @@ const CalendarView = (() => {
         const allGreeted = people.length > 0 && people.every((b) => b.greetedYear === year);
         const gift = document.createElement("img");
         gift.className = "day-gift star-icon" + (allGreeted ? "" : " star-empty");
-        gift.src = allGreeted ? "assets/star.png" : "assets/star-empty.svg";
+        gift.src = allGreeted ? "assets/star.png" : "assets/star-empty.png";
         gift.alt = "";
         gift.width = 10;
         gift.height = 10;

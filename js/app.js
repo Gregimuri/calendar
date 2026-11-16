@@ -2,6 +2,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const monthTools = document.getElementById("monthTools");
   const exportBtn = document.getElementById("exportDataBtn");
   const importInput = document.getElementById("importDataInput");
+  const apkLink = document.getElementById("apkDownload");
+
+  const cap = window.Capacitor;
+  const nativeApp = Boolean(
+    cap && (
+      (typeof cap.isNativePlatform === "function" && cap.isNativePlatform()) ||
+      (typeof cap.getPlatform === "function" && cap.getPlatform() !== "web")
+    )
+  );
+  if (nativeApp && apkLink) apkLink.remove();
 
   function setMonthToolsVisible(visible) {
     if (!monthTools) return;
