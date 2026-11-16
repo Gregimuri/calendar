@@ -256,11 +256,46 @@ input {
   display: none;
 }
 
+.month-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.month-tools[hidden] {
+  display: none;
+}
+
+.data-transfer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.data-btn {
+  display: grid;
+  place-items: center;
+  min-height: 44px;
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  color: var(--accent-deep);
+  font-weight: 700;
+  text-align: center;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.data-btn:active {
+  background: var(--accent-soft);
+}
+
 .apk-download {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-top: 14px;
+  margin-top: 0;
   padding: 14px 16px;
   border-radius: var(--radius);
   border: 1px solid var(--card-border);
@@ -506,11 +541,23 @@ input {
 }
 
 .birthday-icon {
+  width: 36px;
+  height: 36px;
+  margin-top: 2px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.birthday-icon .star-icon {
   width: 28px;
   height: 28px;
-  margin-top: 6px;
   object-fit: contain;
   display: block;
+  pointer-events: none;
 }
 
 .birthday-text {

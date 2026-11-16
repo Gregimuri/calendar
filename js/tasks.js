@@ -185,13 +185,31 @@ const TasksView = (() => {
     li.dataset.kind = "birthday";
     li.dataset.label = entry.name;
 
-    const icon = document.createElement("img");
-    icon.className = "birthday-icon star-icon";
-    icon.src = "assets/star.png";
-    icon.alt = "";
-    icon.width = 28;
-    icon.height = 28;
-    icon.setAttribute("aria-hidden", "true");
+    const year = currentDateKey ? Number(currentDateKey.slice(0, 4)) : new Date().getFullYear();
+    const greeted = entry.greetedYear === year;
+    const icon = document.createElement("button");
+    icon.type = "button";
+    icon.className = "birthday-icon star-toggle";
+    icon.setAttribute(
+      "aria-label",
+      greeted ? "Снять отметку о поздравлении" : "Отметить, что поздравили"
+    );
+    const star = document.createElement("img");
+    star.className = "star-icon";
+    star.src = greeted ? "assets/star.png" : "assets/star-empty.svg";
+    star.alt = "";
+    star.width = 28;
+    star.height = 28;
+    icon.appendChild(star);
+    icon.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+    });
+    icon.addEventListener("click", (event) => {
+      event.stopPropagation();
+      Storage.updateBirthday(entry.id, { greetedYear: greeted ? null : year });
+      notifyChange();
+      render();
+    });
 
     const text = document.createElement("p");
     text.className = "task-text birthday-text";

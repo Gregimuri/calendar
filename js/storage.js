@@ -187,6 +187,29 @@ const Storage = (() => {
     return list;
   }
 
+  function exportData() {
+    return {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      tasks: loadAll(),
+      birthdays: loadBirthdays(),
+    };
+  }
+
+  function importData(data) {
+    if (!data || typeof data !== "object" || Array.isArray(data)) {
+      throw new Error("Неверный файл");
+    }
+    if (!data.tasks || typeof data.tasks !== "object" || Array.isArray(data.tasks)) {
+      throw new Error("В файле нет задач");
+    }
+    if (!Array.isArray(data.birthdays)) {
+      throw new Error("В файле нет дней рождения");
+    }
+    saveAll(data.tasks);
+    saveBirthdays(data.birthdays);
+  }
+
   return {
     getTasks,
     addTask,
@@ -202,5 +225,7 @@ const Storage = (() => {
     addBirthday,
     updateBirthday,
     deleteBirthday,
+    exportData,
+    importData,
   };
 })();

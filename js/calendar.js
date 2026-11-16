@@ -163,9 +163,12 @@ const CalendarView = (() => {
 
       const md = `${String(cell.date.getMonth() + 1).padStart(2, "0")}-${String(cell.date.getDate()).padStart(2, "0")}`;
       if (birthdayDays.has(md)) {
+        const year = cell.date.getFullYear();
+        const people = Storage.getBirthdaysForDate(cell.key);
+        const allGreeted = people.length > 0 && people.every((b) => b.greetedYear === year);
         const gift = document.createElement("img");
-        gift.className = "day-gift star-icon";
-        gift.src = "assets/star.png";
+        gift.className = "day-gift star-icon" + (allGreeted ? "" : " star-empty");
+        gift.src = allGreeted ? "assets/star.png" : "assets/star-empty.svg";
         gift.alt = "";
         gift.width = 10;
         gift.height = 10;
@@ -210,15 +213,19 @@ const CalendarView = (() => {
     const d = new Date(viewYear, viewMonth + delta, 1);
     viewYear = d.getFullYear();
     viewMonth = d.getMonth();
-    if (collapsed && selectedKey) {
-      const selected = parseKey(selectedKey);
-      if (selected.getFullYear() !== viewYear || selected.getMonth() !== viewMonth) {
-        collapsed = false;
-        selectedKey = null;
-        onExpand();
-      }
-    }
     render();
+  }
+
+  function shiftWeek(delta) {
+    if (!selectedKey) return;
+    const date = parseKey(selectedKey);
+    date.setDate(date.getDate() + delta * 7);
+    selectDay(toKey(date.getFullYear(), date.getMonth(), date.getDate()));
+  }
+
+  function shift(delta) {
+    if (collapsed) shiftWeek(delta);
+    else shiftMonth(delta);
   }
 
   function init(handlers = {}) {
@@ -228,8 +235,8 @@ const CalendarView = (() => {
     viewYear = now.getFullYear();
     viewMonth = now.getMonth();
 
-    document.getElementById("prevMonth").addEventListener("click", () => shiftMonth(-1));
-    document.getElementById("nextMonth").addEventListener("click", () => shiftMonth(1));
+    document.getElementById("prevMonth").addEventListener("click", () => shift(-1));
+    document.getElementById("nextMonth").addEventListener("click", () => shift(1));
     document.getElementById("monthTitle").addEventListener("click", () => {
       if (collapsed) expand();
     });
