@@ -74,11 +74,39 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   });
 
-  if (exportBtn) exportBtn.addEventListener("click", downloadBackup);
+  const moreToggle = document.getElementById("moreToggle");
+  const morePanel = document.getElementById("morePanel");
+
+  function setMoreOpen(open) {
+    if (!morePanel || !moreToggle) return;
+    morePanel.hidden = !open;
+    moreToggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+
+  if (moreToggle) {
+    moreToggle.addEventListener("click", (event) => {
+      event.stopPropagation();
+      setMoreOpen(morePanel.hidden);
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    if (!morePanel || morePanel.hidden) return;
+    if (event.target.closest("#moreMenu")) return;
+    setMoreOpen(false);
+  });
+
+  if (exportBtn) {
+    exportBtn.addEventListener("click", () => {
+      downloadBackup();
+      setMoreOpen(false);
+    });
+  }
   if (importInput) {
     importInput.addEventListener("change", () => {
       const file = importInput.files && importInput.files[0];
       importInput.value = "";
+      setMoreOpen(false);
       if (file) importBackup(file);
     });
   }
