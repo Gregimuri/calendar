@@ -14,8 +14,17 @@ document.addEventListener("DOMContentLoaded", () => {
   if (nativeApp && apkLink) apkLink.remove();
 
   function setMonthToolsVisible(visible) {
-    if (!monthTools) return;
-    monthTools.hidden = !visible;
+    if (monthTools) monthTools.hidden = !visible;
+    const menu = document.getElementById("moreMenu");
+    if (menu) {
+      menu.hidden = !visible;
+      if (!visible) {
+        const panel = document.getElementById("morePanel");
+        const toggle = document.getElementById("moreToggle");
+        if (panel) panel.hidden = true;
+        if (toggle) toggle.setAttribute("aria-expanded", "false");
+      }
+    }
   }
 
   function refreshOpenDay() {

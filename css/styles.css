@@ -278,6 +278,10 @@ input {
   gap: 8px;
 }
 
+.more-menu[hidden] {
+  display: none;
+}
+
 .more-panel {
   display: flex;
   flex-direction: column;
@@ -606,6 +610,10 @@ input {
   object-fit: contain;
   display: block;
   pointer-events: none;
+}
+
+img.star-icon[src$="star-empty.png"] {
+  filter: drop-shadow(0 0 0.6px #e6a100) drop-shadow(0 0 0.6px #e6a100);
 }
 
 .birthday-text {
